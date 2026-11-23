@@ -17,7 +17,8 @@ def patch(path, pattern, repl, flags=0):
     print(f"patched {path}")
 
 
-# 1. Le navigateur est toujours considere comme 24 h.
+# 1. Le navigateur est toujours considere comme 24 h (le choix memorise
+#    dans le localStorage d'un visiteur est donc ignore aussi).
 patch(
     "packages/lib/timeFormat.ts",
     r"export const isBrowserLocale24h = \(\) => \{.*?\n\};\n",
@@ -25,14 +26,7 @@ patch(
     re.S,
 )
 
-# 2. Le choix memorise par un visiteur (localStorage) est ignore.
-patch(
-    "packages/features/bookings/lib/timePreferences.ts",
-    r"timeFormat: detectBrowserTimeFormat,",
-    "timeFormat: TimeFormat.TWENTY_FOUR_HOUR,",
-)
-
-# 3. Le bouton 12h/24h n'est plus affiche.
+# 2. Le bouton 12h/24h n'est plus affiche.
 patch(
     "packages/features/bookings/components/TimeFormatToggle.tsx",
     r"\n  return \(\n    <ToggleGroup",
