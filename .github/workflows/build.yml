@@ -14,6 +14,10 @@ on:
         description: "URL publique integree dans les fichiers statiques"
         required: true
         default: "https://cal.srv.rushorder.be"
+      force_24h:
+        description: "Forcer le format 24 h et retirer le bouton 12h/24h"
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -41,10 +45,27 @@ jobs:
           repository: calcom/cal.diy
           ref: ${{ inputs.ref }}
 
+      - name: Checkout patches
+        uses: actions/checkout@v4
+        with:
+          path: _patches
+          sparse-checkout: patches
+
+      - name: Apply patches
+        if: ${{ inputs.force_24h }}
+        run: |
+          python3 _patches/patches/force-24h.py
+          git diff --stat
+
+      - name: Remove patch checkout
+        run: rm -rf _patches
+
       - name: Resolve version
         id: v
         run: |
-          echo "sha=$(git rev-parse --short=10 HEAD)" >> "$GITHUB_OUTPUT"
+          SUFFIX=""
+          if [ "${{ inputs.force_24h }}" = "true" ]; then SUFFIX="-24h"; fi
+          echo "sha=$(git rev-parse --short=10 HEAD)$SUFFIX" >> "$GITHUB_OUTPUT"
           echo "date=$(git log -1 --format=%cd --date=format:%Y%m%d)" >> "$GITHUB_OUTPUT"
 
       - name: Start build-time database
